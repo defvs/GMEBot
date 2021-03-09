@@ -1,15 +1,21 @@
 const TwitchBot = require('twitch-bot')
 
 var http = require("https");
+const { exit } = require('process');
+
+if (process.argv.length !== 3) {
+	console.error("Please add channel to the program call")
+	exit();
+}
 
 let data = {};
 
 console.log("Starting the bot");
 
 const Bot = new TwitchBot({
-	username: 'gmestonksbot',
-	oauth: '***REMOVED***',
-	channels: ['festiveox']
+	username: '[your bot username]',
+	oauth: '[your oauth token]',
+	channels: [process.argv[2]]
 })
 
 Bot.on('join', channel => {
@@ -24,9 +30,10 @@ Bot.on('error', err => {
 Bot.on('message', chatter => {
 	if (chatter.message === '$gme' || chatter.message === '$GME') {
 		try {
-			Bot.say(`GME info - PRICE: ${data.ticker.NYSE.price} / VOLUME: ${(data.ticker.NYSE.volume / 1000000).toFixed(3)}M / BORROW AVAILABLE: ${data.available_shorts.available / 1000}k @ ${data.available_shorts.fee}%`);
+			Bot.say(`GME info - PRICE: \$${data.ticker.NYSE.price} / VOLUME: ${(data.ticker.NYSE.volume / 1000000).toFixed(3)}M / BORROW AVAILABLE: ${data.available_shorts.available / 1000}k @ ${parseFloat(data.available_shorts.fee).toFixed(2)}%`);
 		} catch (error) {
 			Bot.say("Sorry, I don't have any data right now!");
+			console.log(error);
 		}
 	}
 })
@@ -44,8 +51,8 @@ function loadData() {
 
 			res.on('end', function () {
 				let newData = JSON.parse(body);
-				let newAv = newData.available_shorts.available;
 				if (data.available_shorts !== undefined) {
+					let newAv = newData.available_shorts.available;
 					let oldAv = data.available_shorts.available;
 					let diff = oldAv - newAv;
 					if (diff !== 0) {
